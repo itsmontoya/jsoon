@@ -5,8 +5,8 @@ Jsoon is a fast and simple json encoding/decoding library. Custom Marshal/Unmars
 
 ## Benchmarks
 ```
-BenchmarkJsoonMarshal-4          5000000               365 ns/op               0 B/op          0 allocs/op
-BenchmarkStdlibMarshal-4         1000000              1337 ns/op               8 B/op          1 allocs/op
+BenchmarkJsoonMarshal-4     5000000     365 ns/op    0 B/op    0 allocs/op
+BenchmarkStdlibMarshal-4    1000000    1337 ns/op    8 B/op    1 allocs/op
 ```
 
 ## Usage 
