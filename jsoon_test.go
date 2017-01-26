@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	testStr = `{"name":"Test Name","greeting":"Hello world!","age":"32","activeUser":"true"}`
+	testStr = `{"name":"Test Name","greeting":"Hello world!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"}}`
 )
 
 func TestMarshal(t *testing.T) {
@@ -52,6 +52,8 @@ func newTestStruct() (ts testStruct) {
 	ts.Greeting = "Hello world!"
 	ts.Age = 32
 	ts.ActiveUser = true
+	ts.Additional.DateCreated = "2017-01-01"
+	ts.Additional.LastLogin = "2017-01-01"
 	return
 }
 
@@ -60,6 +62,8 @@ type testStruct struct {
 	Greeting   string
 	Age        float64
 	ActiveUser bool
+
+	Additional testSimpleStruct
 }
 
 func (t *testStruct) MarshalJsoon(enc *Encoder) (err error) {
@@ -67,5 +71,17 @@ func (t *testStruct) MarshalJsoon(enc *Encoder) (err error) {
 	enc.String("greeting", t.Greeting)
 	enc.Number("age", t.Age)
 	enc.Bool("activeUser", t.ActiveUser)
+	enc.Object("additional", &t.Additional)
+	return
+}
+
+type testSimpleStruct struct {
+	DateCreated string
+	LastLogin   string
+}
+
+func (t *testSimpleStruct) MarshalJsoon(enc *Encoder) (err error) {
+	enc.String("dateCreated", t.DateCreated)
+	enc.String("lastLogin", t.LastLogin)
 	return
 }
