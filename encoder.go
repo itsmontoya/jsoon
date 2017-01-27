@@ -90,6 +90,47 @@ func (e *Encoder) Object(key string, value Encodee) {
 	e.depth--
 	// Set child value to parent's child value
 	e.child = pc
+	e.child++
+}
+
+// Array will marshal an array
+func (e *Encoder) Array(key string, value ArrayEncodee) {
+	// Get parent's child value
+	pc := e.child
+	// Get parent's buffer
+	pb := e.buf
+	if pb != nil {
+		e.w.Write(pb.Bytes())
+		pb.Reset()
+	}
+
+	// Set child value to 0, since this is a new object
+	e.child = 0
+	// Increase depth
+	e.depth++
+	// Acquire buffer for this depth
+	e.buf = acquireBuffer()
+
+	if pc > 0 {
+		e.buf.WriteByte(',')
+	}
+
+	e.buf.WriteByte('"')
+	e.buf.WriteString(key)
+	e.buf.WriteString(`":[`)
+	value.MarshalJsoon(newArrayEncoder(e))
+	e.buf.WriteByte(']')
+	e.w.Write(e.buf.Bytes())
+
+	// Release buffer for this depth
+	releaseBuffer(e.buf)
+	// Set buffer as the parent's buffer
+	e.buf = pb
+	// Reduce depth to the parent's level
+	e.depth--
+	// Set child value to parent's child value
+	e.child = pc
+	e.child++
 }
 
 // String will marshal a string

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	testStr = `{"name":"Test Name","greeting":"Hello world!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"}}`
+	testStr = `{"name":"Test Name","greeting":"Hello world!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},"additionals":[{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},{"dateCreated":"2017-01-02","lastLogin":"2017-01-02"},{"dateCreated":"2017-01-03","lastLogin":"2017-01-03"}]}`
 )
 
 func TestMarshal(t *testing.T) {
@@ -23,7 +23,7 @@ func TestMarshal(t *testing.T) {
 
 func BenchmarkJsoonMarshal(b *testing.B) {
 	ts := newTestStruct()
-	buf := bytes.NewBuffer(make([]byte, 0, 32))
+	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	enc := NewEncoder(buf)
 
 	for i := 0; i < b.N; i++ {
@@ -36,7 +36,7 @@ func BenchmarkJsoonMarshal(b *testing.B) {
 
 func BenchmarkStdlibMarshal(b *testing.B) {
 	ts := newTestStruct()
-	buf := bytes.NewBuffer(make([]byte, 0, 32))
+	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	enc := json.NewEncoder(buf)
 
 	for i := 0; i < b.N; i++ {
@@ -52,8 +52,14 @@ func newTestStruct() (ts testStruct) {
 	ts.Greeting = "Hello world!"
 	ts.Age = 32
 	ts.ActiveUser = true
-	ts.Additional.DateCreated = "2017-01-01"
-	ts.Additional.LastLogin = "2017-01-01"
+	ts.Additional = &testSimpleStruct{
+		DateCreated: "2017-01-01",
+		LastLogin:   "2017-01-01",
+	}
+
+	ts.Additionals = append(ts.Additionals, &testSimpleStruct{"2017-01-01", "2017-01-01"})
+	ts.Additionals = append(ts.Additionals, &testSimpleStruct{"2017-01-02", "2017-01-02"})
+	ts.Additionals = append(ts.Additionals, &testSimpleStruct{"2017-01-03", "2017-01-03"})
 	return
 }
 
@@ -63,7 +69,8 @@ type testStruct struct {
 	Age        float64
 	ActiveUser bool
 
-	Additional testSimpleStruct
+	Additional  *testSimpleStruct
+	Additionals testSimpleStructSlice
 }
 
 func (t *testStruct) MarshalJsoon(enc *Encoder) (err error) {
@@ -71,7 +78,8 @@ func (t *testStruct) MarshalJsoon(enc *Encoder) (err error) {
 	enc.String("greeting", t.Greeting)
 	enc.Number("age", t.Age)
 	enc.Bool("activeUser", t.ActiveUser)
-	enc.Object("additional", &t.Additional)
+	enc.Object("additional", t.Additional)
+	enc.Array("additionals", t.Additionals)
 	return
 }
 
@@ -83,5 +91,15 @@ type testSimpleStruct struct {
 func (t *testSimpleStruct) MarshalJsoon(enc *Encoder) (err error) {
 	enc.String("dateCreated", t.DateCreated)
 	enc.String("lastLogin", t.LastLogin)
+	return
+}
+
+type testSimpleStructSlice []*testSimpleStruct
+
+func (t testSimpleStructSlice) MarshalJsoon(a *ArrayEncoder) (err error) {
+	for _, v := range t {
+		a.Object(v)
+	}
+
 	return
 }

@@ -26,3 +26,13 @@ func releaseBuffer(buf *buffer) {
 type Encodee interface {
 	MarshalJsoon(enc *Encoder) error
 }
+
+// Encodee is an item that has a Marshal helper func
+type ArrayEncodee interface {
+	MarshalJsoon(enc *ArrayEncoder) error
+}
+
+// Decodee is an item that has an Unmarshal helper func
+type Decodee interface {
+	UnmarshalJsoon(dec *Decoder) error
+}
