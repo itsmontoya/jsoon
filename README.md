@@ -1,4 +1,5 @@
-## Jsoon 
+## Jsoon [![GoDoc](https://godoc.org/github.com/itsmontoya/jsoon?status.svg)](https://godoc.org/github.com/itsmontoya/jsoon) ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
+
 Jsoon is a fast and simple json encoding/decoding library. Custom Marshal/Unmarshal funcs are utilized to avoid leveraging reflection.
 
 *At the moment, only encoding is implemented*
