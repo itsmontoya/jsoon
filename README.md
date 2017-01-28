@@ -60,3 +60,9 @@ func (u *user) MarshalJsoon(enc *jsoon.Encoder) (err error) {
 	return
 }
 ```
+
+## To do
+1. Add some more thorough testing, preferably using some JSON objects from common open APIs
+2. Optimize the decoding process so that we incur less allocations
+3. ???
+4. Profit
