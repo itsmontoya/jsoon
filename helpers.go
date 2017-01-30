@@ -17,27 +17,21 @@ func isFalseBytes(s []byte) bool {
 	return bytes.Compare(falseBytes[:], s) == 0
 }
 
-func appendString(val, s []byte) ([]byte, int) {
-	var opened bool
-	for i, b := range s {
+func (d *Decoder) appendString(val []byte) ([]byte, error) {
+	for b, err := d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
 		if b != charDoubleQuote {
 			val = append(val, b)
 			continue
 		}
 
-		if !opened {
-			opened = true
-			continue
-		}
-
-		return val, i
+		return val, nil
 	}
 
-	return val, -1
+	return nil, ErrInvalidChar
 }
 
-func appendNumber(val, s []byte) ([]byte, int) {
-	for i, b := range s {
+func (d *Decoder) appendNumber(val []byte) ([]byte, error) {
+	for b, err := d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
 		if isNumber(b) {
 			val = append(val, b)
 			continue
@@ -45,64 +39,83 @@ func appendNumber(val, s []byte) ([]byte, int) {
 
 		switch b {
 		case charComma, charSpace, charCloseCurly:
-			return val, i - 1
+			d.r.UnreadByte()
+			return val, nil
 		default:
 			break
 		}
 	}
 
-	return val, -1
+	return nil, ErrInvalidChar
 }
 
-func appendBool(val, s []byte) ([]byte, int) {
-	switch s[0] {
-	case charLowerT:
-		if isTrueBytes(s[:4]) {
-			return append(val, s[:4]...), 3
+func (d *Decoder) appendTrue(val []byte) ([]byte, error) {
+	var i int
+	for b, err := d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
+		if b != trueBytes[i] {
+			return val, ErrInvalidChar
 		}
-	case charLowerF:
-		if isFalseBytes(s[:5]) {
-			return append(val, s[:5]...), 4
+
+		val = append(val, b)
+
+		if i++; i == 4 {
+			break
 		}
 	}
 
-	return val, -1
+	return val, nil
 }
 
-func appendObject(val, s []byte) ([]byte, int) {
-	var depth int
-	for i, b := range s {
+func (d *Decoder) appendFalse(val []byte) ([]byte, error) {
+	var i int
+	for b, err := d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
+		if b != falseBytes[i] {
+			return nil, ErrInvalidChar
+		}
+
 		val = append(val, b)
 
+		if i++; i == 5 {
+			break
+		}
+	}
+
+	return nil, nil
+}
+
+func (d *Decoder) appendObject(val []byte) ([]byte, error) {
+	var depth int
+	for b, err := d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
+		val = append(val, b)
 		switch b {
 		case charCloseCurly:
 			if depth--; depth == 0 {
-				return val, i
+				return val, nil
 			}
+
 		case charOpenCurly:
 			depth++
 		}
 	}
 
-	return val, -1
+	return nil, ErrInvalidChar
 }
 
-func appendArray(val, s []byte) ([]byte, int) {
+func (d *Decoder) appendArray(val []byte) ([]byte, error) {
 	var depth int
-	for i, b := range s {
+	for b, err := d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
 		val = append(val, b)
-
 		switch b {
 		case charCloseBracket:
 			if depth--; depth == 0 {
-				return val, i
+				return val, nil
 			}
 		case charOpenBracket:
 			depth++
 		}
 	}
 
-	return val, -1
+	return nil, ErrInvalidChar
 }
 
 func isLetter(b byte) bool {

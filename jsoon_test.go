@@ -23,8 +23,10 @@ func TestMarshal(t *testing.T) {
 
 func TestUnmarshal(t *testing.T) {
 	var ts testStruct
-	dec := NewDecoder([]byte(testStr))
-	dec.Decode(&ts)
+	dec := NewDecoder(bytes.NewReader([]byte(testStr)))
+	if err := dec.Decode(&ts); err != nil {
+		t.Fatal(err)
+	}
 
 	cts := newTestStruct()
 	if !ts.Equals(&cts) {
@@ -49,7 +51,7 @@ func BenchmarkJsoonUnmarshal(b *testing.B) {
 	var ts testStruct
 
 	for i := 0; i < b.N; i++ {
-		NewDecoder([]byte(testStr)).Decode(&ts)
+		NewDecoder(bytes.NewReader([]byte(testStr))).Decode(&ts)
 	}
 
 	b.ReportAllocs()

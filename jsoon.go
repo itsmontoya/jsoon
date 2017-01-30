@@ -3,6 +3,7 @@ package jsoon
 import "sync"
 import "github.com/missionMeteora/toolkit/errors"
 import "strconv"
+import "bytes"
 
 const (
 	// ErrInvalidChar is returned when an invalid character is found within a provided json
@@ -88,7 +89,7 @@ func (v *Value) Object(val Decodee) (err error) {
 		return ErrValueNotObject
 	}
 
-	return NewDecoder(v.d).Decode(val)
+	return NewDecoder(bytes.NewReader(v.d)).Decode(val)
 }
 
 // Array will associate a provided value with an array
@@ -97,7 +98,7 @@ func (v *Value) Array(val ArrayDecodee) (err error) {
 		return ErrValueNotArray
 	}
 
-	return NewDecoder(v.d).Decode(val)
+	return NewDecoder(bytes.NewReader(v.d)).Decode(val)
 }
 
 func (v *Value) String() (val string, err error) {
@@ -140,4 +141,11 @@ func (v *Value) Bool() (val bool, err error) {
 	}
 
 	return strconv.ParseBool(string(v.d))
+}
+
+// ReadByter is a byte reading interface
+type ReadByter interface {
+	Read([]byte) (int, error)
+	ReadByte() (byte, error)
+	UnreadByte() error
 }

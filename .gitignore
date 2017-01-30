@@ -1,2 +1,5 @@
 jsoon.test
 profiling
+*.pdf
+*.pprof
+*.txt
