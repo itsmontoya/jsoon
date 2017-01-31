@@ -31,7 +31,7 @@ const (
 		{
 			"dateCreated" : "2017-01-03",
 			"lastLogin" : "2017-01-03"
-		},
+		}
 	]
 }
 `
