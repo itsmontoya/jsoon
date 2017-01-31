@@ -8,6 +8,33 @@ import (
 
 const (
 	testStr = `{"name":"Test Name","greeting":"Hello world!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},"additionals":[{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},{"dateCreated":"2017-01-02","lastLogin":"2017-01-02"},{"dateCreated":"2017-01-03","lastLogin":"2017-01-03"}]}`
+
+	testExpanded = `
+{
+	"name" : "Test Name",
+	"greeting" : "Hello world!",
+	"age" : 32,
+	"activeUser" : true,
+	"additional" : {
+		"dateCreated" : "2017-01-01",
+		"lastLogin" : "2017-01-01"
+	},
+	"additionals" : [
+		{
+			"dateCreated" : "2017-01-01",
+			"lastLogin" : "2017-01-01"
+		},
+		{
+			"dateCreated" : "2017-01-02",
+			"lastLogin" : "2017-01-02"
+		},
+		{
+			"dateCreated" : "2017-01-03",
+			"lastLogin" : "2017-01-03"
+		}
+	]
+}
+`
 )
 
 func TestMarshal(t *testing.T) {
@@ -23,10 +50,38 @@ func TestMarshal(t *testing.T) {
 
 func TestUnmarshal(t *testing.T) {
 	var ts testStruct
-	dec := NewDecoder([]byte(testStr))
-	dec.Decode(&ts)
-
 	cts := newTestStruct()
+	rdr := bytes.NewReader([]byte(testStr))
+	dec := NewDecoder(rdr)
+
+	// Test a normal decode process
+	if err := dec.Decode(&ts); err != nil {
+		t.Fatal(err)
+	}
+
+	// Compare values
+	if !ts.Equals(&cts) {
+		t.Fatal("invalid value")
+	}
+
+	// Test decoding again from the same reader
+	rdr.Seek(0, 0)
+	if err := dec.Decode(&ts); err != nil {
+		t.Fatal(err)
+	}
+
+	// Compare values
+	if !ts.Equals(&cts) {
+		t.Fatal("invalid value")
+	}
+
+	// Test with the expanded object
+	rdr = bytes.NewReader([]byte(testExpanded))
+	dec = NewDecoder(rdr)
+	if err := dec.Decode(&ts); err != nil {
+		t.Fatal(err)
+	}
+
 	if !ts.Equals(&cts) {
 		t.Fatal("invalid value")
 	}
@@ -47,9 +102,12 @@ func BenchmarkJsoonMarshal(b *testing.B) {
 
 func BenchmarkJsoonUnmarshal(b *testing.B) {
 	var ts testStruct
+	buf := bytes.NewReader([]byte(testStr))
+	dec := NewDecoder(buf)
 
 	for i := 0; i < b.N; i++ {
-		NewDecoder([]byte(testStr)).Decode(&ts)
+		dec.Decode(&ts)
+		buf.Seek(0, 0)
 	}
 
 	b.ReportAllocs()
@@ -70,9 +128,12 @@ func BenchmarkStdlibMarshal(b *testing.B) {
 
 func BenchmarkStdlibUnmarshal(b *testing.B) {
 	var ts testStruct
+	buf := bytes.NewReader([]byte(testStr))
+	dec := json.NewDecoder(buf)
 
 	for i := 0; i < b.N; i++ {
-		json.Unmarshal([]byte(testStr), &ts)
+		dec.Decode(&ts)
+		buf.Seek(0, 0)
 	}
 
 	b.ReportAllocs()
@@ -177,7 +238,7 @@ func (t *testStruct) UnmarshalJsoon(key string, val *Value) (err error) {
 		}
 
 	case "additionals":
-		t.Additionals = make(testSimpleStructSlice, 0)
+		t.Additionals = make(testSimpleStructSlice, 0, 3)
 		if err = val.Array(&t.Additionals); err != nil {
 			return
 		}

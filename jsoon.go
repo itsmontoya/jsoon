@@ -1,15 +1,15 @@
 package jsoon
 
-import "sync"
 import "github.com/missionMeteora/toolkit/errors"
 import "strconv"
 
 const (
 	// ErrInvalidChar is returned when an invalid character is found within a provided json
 	ErrInvalidChar = errors.Error("invalid character")
-
 	// ErrUnexpectedEnd is returned when decoding data ends before the json is complete
 	ErrUnexpectedEnd = errors.Error("input ended before expected")
+	//ErrInvalidValue is returned when a Decodee is not present for an object or a ArrayDecodee is not present for an array
+	ErrInvalidValue = errors.Error("invalid value provided")
 
 	// ErrValueNotObject is returned when value is not an object
 	ErrValueNotObject = errors.Error("value cannot be parsed as an object")
@@ -34,25 +34,7 @@ const (
 	valBool
 )
 
-var p = sync.Pool{
-	New: func() interface{} {
-		return newBuffer()
-	},
-}
-
-func acquireBuffer() (buf *buffer) {
-	var ok bool
-	if buf, ok = p.Get().(*buffer); !ok {
-		panic("invalid pool type")
-	}
-
-	return
-}
-
-func releaseBuffer(buf *buffer) {
-	buf.Reset()
-	p.Put(buf)
-}
+var p = newPool(1024 * 4)
 
 // Encodee is an item that has a Marshal helper func
 type Encodee interface {
@@ -78,8 +60,8 @@ type ArrayDecodee interface {
 type Value struct {
 	// Value type
 	vt uint8
-	// Data represented as bytes
-	d []byte
+	// Reference decoder
+	d *Decoder
 }
 
 // Object will associate a provided value with an object
@@ -88,7 +70,12 @@ func (v *Value) Object(val Decodee) (err error) {
 		return ErrValueNotObject
 	}
 
-	return NewDecoder(v.d).Decode(val)
+	v.d.kb.Reset()
+	if err = v.d.decodeObject(val); err != nil {
+		return
+	}
+
+	return
 }
 
 // Array will associate a provided value with an array
@@ -97,7 +84,12 @@ func (v *Value) Array(val ArrayDecodee) (err error) {
 		return ErrValueNotArray
 	}
 
-	return NewDecoder(v.d).Decode(val)
+	v.d.kb.Reset()
+	if err = v.d.decodeArray(val); err != nil {
+		return
+	}
+
+	return
 }
 
 func (v *Value) String() (val string, err error) {
@@ -106,7 +98,7 @@ func (v *Value) String() (val string, err error) {
 		return
 	}
 
-	val = string(v.d)
+	val = string(v.d.vb.Bytes())
 	return
 }
 
@@ -118,7 +110,7 @@ func (v *Value) Bytes() (val []byte, err error) {
 		return
 	}
 
-	val = v.d
+	val = v.d.vb.Bytes()
 	return
 }
 
@@ -129,7 +121,7 @@ func (v *Value) Number() (val float64, err error) {
 		return
 	}
 
-	return strconv.ParseFloat(string(v.d), 64)
+	return strconv.ParseFloat(string(v.d.vb.Bytes()), 64)
 }
 
 // Bool will return a boolean value
@@ -139,5 +131,13 @@ func (v *Value) Bool() (val bool, err error) {
 		return
 	}
 
-	return strconv.ParseBool(string(v.d))
+	val = len(v.d.vb.Bytes()) == 4
+	return
+}
+
+// ReadByter is a byte reading interface
+type ReadByter interface {
+	Read([]byte) (int, error)
+	ReadByte() (byte, error)
+	UnreadByte() error
 }
