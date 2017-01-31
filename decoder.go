@@ -1,8 +1,9 @@
 package jsoon
 
-import "io"
-import "bufio"
-import "fmt"
+import (
+	"bufio"
+	"io"
+)
 
 const (
 	stateStart uint8 = iota
@@ -162,7 +163,6 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 	val.d = d
 
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
-		fmt.Println("Reading byte...", string(b))
 		switch state {
 		case osStart:
 			if isWhitespace(b) {
@@ -217,7 +217,7 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 				state = osEnd
 				goto END
 
-			case charSpace:
+			case charSpace, charNewline, charTab:
 				state = osEnd
 
 			default:
@@ -226,7 +226,7 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 
 		case osEnd:
 			switch b {
-			case charSpace:
+			case charSpace, charNewline, charTab:
 			case charCloseCurly:
 				goto END
 
@@ -294,7 +294,7 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 				state = asEnd
 				goto END
 
-			case charSpace:
+			case charSpace, charNewline, charTab:
 				state = asEnd
 
 			default:
@@ -303,8 +303,8 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 
 		case asEnd:
 			switch b {
-			case charSpace:
-			case charCloseCurly:
+			case charSpace, charNewline, charTab:
+			case charCloseBracket:
 				goto END
 
 			default:
@@ -328,15 +328,13 @@ END:
 func (d *Decoder) appendValue() (vt uint8, err error) {
 	var b byte
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
-		fmt.Println("Append", string(b))
 		switch b {
-		case charSpace:
+		case charSpace, charNewline, charTab:
 			continue
 
 		case charDoubleQuote:
 			vt = valString
 			err = d.appendString()
-			fmt.Println("Appending string?", err)
 
 		case charLowerT:
 			vt = valBool
@@ -397,7 +395,7 @@ func (d *Decoder) appendNumber() (err error) {
 		}
 
 		switch b {
-		case charComma, charSpace, charCloseCurly:
+		case charSpace, charNewline, charTab, charComma, charCloseCurly:
 			d.r.UnreadByte()
 			return
 		default:
