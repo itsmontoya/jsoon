@@ -6,25 +6,23 @@ import (
 
 func newPool(sz int) *pool {
 	var p pool
-	p.buf = mailbox.New(sz)
-	p.val = mailbox.New(sz)
+	p.mb = mailbox.New(sz)
 	return &p
 }
 
 type pool struct {
-	buf *mailbox.Mailbox
-	val *mailbox.Mailbox
+	mb *mailbox.Mailbox
 }
 
-// acquireBuffer will acquire a buffer from the pool
-func (p *pool) acquireBuffer() (buf *buffer) {
+// Acquire will acquire a buffer from the pool
+func (p *pool) Acquire() (buf *buffer) {
 	var (
 		v  interface{}
 		sc mailbox.StateCode
 		ok bool
 	)
 
-	if v, sc = p.buf.Receive(false); sc == mailbox.StateEmpty {
+	if v, sc = p.mb.Receive(false); sc == mailbox.StateEmpty {
 		return newBuffer()
 	}
 
@@ -35,9 +33,9 @@ func (p *pool) acquireBuffer() (buf *buffer) {
 	return
 }
 
-// releaseBuffer will release a buffer to the pool
-func (p *pool) releaseBuffer(buf *buffer) {
+// Release will release a buffer to the pool
+func (p *pool) Release(buf *buffer) {
 	buf.Reset()
 	// If the mailbox is full, move along
-	p.buf.Send(buf, false)
+	p.mb.Send(buf, false)
 }

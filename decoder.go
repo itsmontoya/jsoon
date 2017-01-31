@@ -79,8 +79,8 @@ func (d *Decoder) Decode(value interface{}) (err error) {
 	var b byte
 
 	if d.dc == 0 {
-		d.kb = p.acquireBuffer()
-		d.vb = p.acquireBuffer()
+		d.kb = p.Acquire()
+		d.vb = p.Acquire()
 	}
 	d.dc++
 
@@ -119,8 +119,8 @@ func (d *Decoder) Decode(value interface{}) (err error) {
 END:
 	d.dc--
 	if d.dc == 0 {
-		p.releaseBuffer(d.kb)
-		p.releaseBuffer(d.vb)
+		p.Release(d.kb)
+		p.Release(d.vb)
 		d.kb = nil
 		d.vb = nil
 	}
@@ -248,11 +248,11 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 
 			d.r.UnreadByte()
 			if val.vt, err = d.appendValue(); err != nil {
-				goto END
+				return
 			}
 
 			if err = dec.UnmarshalJsoon(&val); err != nil {
-				goto END
+				return
 			}
 
 			val.vt = valNil
