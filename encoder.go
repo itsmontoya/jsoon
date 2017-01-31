@@ -35,7 +35,7 @@ func (e *Encoder) Encode(value Encodee) {
 	// Increase depth
 	e.depth++
 	// Acquire buffer for this depth
-	e.buf = acquireBuffer()
+	e.buf = p.Acquire()
 
 	e.buf.WriteByte('{')
 	value.MarshalJsoon(e)
@@ -43,7 +43,7 @@ func (e *Encoder) Encode(value Encodee) {
 	e.w.Write(e.buf.Bytes())
 
 	// Release buffer for this depth
-	releaseBuffer(e.buf)
+	p.Release(e.buf)
 	// Set buffer as the parent's buffer
 	e.buf = pb
 	// Reduce depth to the parent's level
@@ -64,7 +64,7 @@ func (e *Encoder) Object(key string, value Encodee) {
 	}
 
 	// Acquire buffer for this depth
-	e.buf = acquireBuffer()
+	e.buf = p.Acquire()
 
 	if e.child > 0 {
 		e.buf.WriteByte(',')
@@ -83,7 +83,7 @@ func (e *Encoder) Object(key string, value Encodee) {
 	e.w.Write(e.buf.Bytes())
 
 	// Release buffer for this depth
-	releaseBuffer(e.buf)
+	p.Release(e.buf)
 	// Set buffer as the parent's buffer
 	e.buf = pb
 	// Reduce depth to the parent's level
@@ -109,7 +109,7 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	// Increase depth
 	e.depth++
 	// Acquire buffer for this depth
-	e.buf = acquireBuffer()
+	e.buf = p.Acquire()
 
 	if pc > 0 {
 		e.buf.WriteByte(',')
@@ -123,7 +123,7 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	e.w.Write(e.buf.Bytes())
 
 	// Release buffer for this depth
-	releaseBuffer(e.buf)
+	p.Release(e.buf)
 	// Set buffer as the parent's buffer
 	e.buf = pb
 	// Reduce depth to the parent's level
