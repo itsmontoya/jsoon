@@ -6,27 +6,6 @@ import (
 )
 
 const (
-	stateStart uint8 = iota
-	stateObjStart
-	stateKeyStart
-	stateKey
-	stateKeyEnd
-	stateKVSeparator
-	stateVal
-	stateValEnd
-	stateObjWaitingEnd
-	stateObjEnd
-	stateEnd
-)
-
-const (
-	dsStart uint8 = iota
-	dsObjectStart
-	dsArrayStart
-	dsEnd
-)
-
-const (
 	osStart uint8 = iota
 	osKey
 	osPreSeparator
