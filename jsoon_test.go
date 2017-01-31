@@ -238,7 +238,7 @@ func (t *testStruct) UnmarshalJsoon(key string, val *Value) (err error) {
 		}
 
 	case "additionals":
-		t.Additionals = make(testSimpleStructSlice, 0)
+		t.Additionals = make(testSimpleStructSlice, 0, 3)
 		if err = val.Array(&t.Additionals); err != nil {
 			return
 		}
