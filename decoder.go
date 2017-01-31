@@ -174,8 +174,7 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 			state = osValue
 
 		case osValue:
-			d.r.UnreadByte()
-			if val.vt, err = d.appendValue(); err != nil {
+			if val.vt, err = d.appendValue(b); err != nil {
 				goto END
 			}
 
@@ -246,8 +245,7 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 				continue
 			}
 
-			d.r.UnreadByte()
-			if val.vt, err = d.appendValue(); err != nil {
+			if val.vt, err = d.appendValue(b); err != nil {
 				return
 			}
 
@@ -296,9 +294,9 @@ END:
 	return
 }
 
-func (d *Decoder) appendValue() (vt uint8, err error) {
+func (d *Decoder) appendValue(lead byte) (vt uint8, err error) {
 	var b byte
-	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
+	for b = lead; err == nil; b, err = d.r.ReadByte() {
 		if isWhitespace(b) {
 			continue
 		}
@@ -328,8 +326,7 @@ func (d *Decoder) appendValue() (vt uint8, err error) {
 			// TODO: Figure out a cleaner way to perform this check
 			if isNumber(b) {
 				vt = valNumber
-				d.r.UnreadByte()
-				err = d.appendNumber()
+				err = d.appendNumber(b)
 			} else {
 				err = ErrInvalidChar
 			}
@@ -354,9 +351,9 @@ func (d *Decoder) appendString() (err error) {
 	return ErrUnexpectedEnd
 }
 
-func (d *Decoder) appendNumber() (err error) {
+func (d *Decoder) appendNumber(lead byte) (err error) {
 	var b byte
-	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
+	for b = lead; err == nil; b, err = d.r.ReadByte() {
 		if isNumber(b) {
 			d.vb.WriteByte(b)
 			continue
@@ -366,6 +363,7 @@ func (d *Decoder) appendNumber() (err error) {
 		case charSpace, charNewline, charTab:
 			return
 		case charComma, charCloseCurly, charCloseBracket:
+			// TODO: Figure out a way to remove this UnreadByte
 			d.r.UnreadByte()
 			return
 		default:
