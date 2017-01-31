@@ -34,7 +34,7 @@ const (
 	valBool
 )
 
-var p = newPool(1024)
+var p = newPool(1024 * 4)
 
 // Encodee is an item that has a Marshal helper func
 type Encodee interface {
