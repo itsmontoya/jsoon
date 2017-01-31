@@ -71,7 +71,7 @@ func (v *Value) Object(val Decodee) (err error) {
 	}
 
 	v.d.kb.Reset()
-	if err = v.d.Decode(val); err != nil {
+	if err = v.d.decodeObject(val); err != nil {
 		return
 	}
 
@@ -85,7 +85,7 @@ func (v *Value) Array(val ArrayDecodee) (err error) {
 	}
 
 	v.d.kb.Reset()
-	if err = v.d.Decode(val); err != nil {
+	if err = v.d.decodeArray(val); err != nil {
 		return
 	}
 

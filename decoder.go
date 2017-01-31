@@ -79,8 +79,8 @@ func (d *Decoder) Decode(value interface{}) (err error) {
 	var b byte
 
 	if d.dc == 0 {
-		d.kb = p.Acquire()
-		d.vb = p.Acquire()
+		d.kb = p.acquireBuffer()
+		d.vb = p.acquireBuffer()
 	}
 	d.dc++
 
@@ -97,7 +97,6 @@ func (d *Decoder) Decode(value interface{}) (err error) {
 				goto END
 			}
 
-			d.r.UnreadByte()
 			err = d.decodeObject(dec)
 			goto END
 
@@ -108,7 +107,6 @@ func (d *Decoder) Decode(value interface{}) (err error) {
 				goto END
 			}
 
-			d.r.UnreadByte()
 			err = d.decodeArray(dec)
 			goto END
 
@@ -121,8 +119,8 @@ func (d *Decoder) Decode(value interface{}) (err error) {
 END:
 	d.dc--
 	if d.dc == 0 {
-		p.Release(d.kb)
-		p.Release(d.vb)
+		p.releaseBuffer(d.kb)
+		p.releaseBuffer(d.vb)
 		d.kb = nil
 		d.vb = nil
 	}
@@ -148,9 +146,12 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 				continue
 			}
 
-			if b == charDoubleQuote {
-				state = osKey
+			if b != charDoubleQuote {
+				err = ErrInvalidChar
+				goto END
 			}
+
+			state = osKey
 
 		case osKey:
 			if b == charDoubleQuote {
@@ -161,25 +162,25 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 			d.kb.WriteByte(b)
 
 		case osPreSeparator:
-			if b == charSpace {
+			if isWhitespace(b) {
 				continue
 			}
 
-			if b == charColon {
-				state = osValue
-			} else {
+			if b != charColon {
 				err = ErrInvalidChar
-				return
+				goto END
 			}
+
+			state = osValue
 
 		case osValue:
 			d.r.UnreadByte()
 			if val.vt, err = d.appendValue(); err != nil {
-				return
+				goto END
 			}
 
 			if err = dec.UnmarshalJsoon(string(d.kb.Bytes()), &val); err != nil {
-				return
+				goto END
 			}
 
 			val.vt = valNil
@@ -188,30 +189,28 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 			state = osPostValue
 
 		case osPostValue:
-			switch b {
-			case charComma:
+			if isWhitespace(b) {
+				state = osEnd
+			} else if b == charComma {
 				state = osStart
-
-			case charCloseCurly:
+			} else if b == charCloseCurly {
 				state = osEnd
 				goto END
-
-			case charSpace, charNewline, charTab:
-				state = osEnd
-
-			default:
-				return ErrInvalidChar
+			} else {
+				err = ErrInvalidChar
+				goto END
 			}
 
 		case osEnd:
-			switch b {
-			case charSpace, charNewline, charTab:
-			case charCloseCurly:
-				goto END
-
-			default:
-				return ErrInvalidChar
+			if isWhitespace(b) {
+				continue
 			}
+
+			if b != charCloseCurly {
+				err = ErrInvalidChar
+			}
+
+			goto END
 		}
 	}
 
@@ -243,21 +242,17 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
 		switch state {
 		case asStart:
-			if b == charOpenBracket {
-				state = asValue
+			if isWhitespace(b) {
 				continue
 			}
 
-			return ErrInvalidChar
-
-		case asValue:
 			d.r.UnreadByte()
 			if val.vt, err = d.appendValue(); err != nil {
-				return
+				goto END
 			}
 
 			if err = dec.UnmarshalJsoon(&val); err != nil {
-				return
+				goto END
 			}
 
 			val.vt = valNil
@@ -265,29 +260,26 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 			state = asPostValue
 
 		case asPostValue:
-			switch b {
-			case charComma:
-				state = asValue
-
-			case charCloseBracket:
+			if isWhitespace(b) {
+				state = asEnd
+			} else if b == charComma {
+				state = asStart
+			} else if b == charCloseBracket {
 				state = asEnd
 				goto END
-
-			case charSpace, charNewline, charTab:
-				state = asEnd
-
-			default:
-				return ErrInvalidChar
+			} else {
+				err = ErrInvalidChar
+				goto END
 			}
 
 		case asEnd:
-			switch b {
-			case charSpace, charNewline, charTab:
-			case charCloseBracket:
+			if isWhitespace(b) {
+				continue
+			} else if b == charCloseBracket {
 				goto END
-
-			default:
-				return ErrInvalidChar
+			} else {
+				err = ErrInvalidChar
+				goto END
 			}
 		}
 	}
@@ -307,32 +299,29 @@ END:
 func (d *Decoder) appendValue() (vt uint8, err error) {
 	var b byte
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
-		switch b {
-		case charSpace, charNewline, charTab:
+		if isWhitespace(b) {
 			continue
+		}
 
+		switch b {
 		case charDoubleQuote:
 			vt = valString
 			err = d.appendString()
 
 		case charLowerT:
 			vt = valBool
-			d.r.UnreadByte()
 			err = d.appendTrue()
 
 		case charLowerF:
 			vt = valBool
-			d.r.UnreadByte()
 			err = d.appendFalse()
 
 		case charOpenCurly:
 			vt = valObject
-			d.r.UnreadByte()
 			return
 
 		case charOpenBracket:
 			vt = valArray
-			d.r.UnreadByte()
 			return
 
 		default:
@@ -342,7 +331,7 @@ func (d *Decoder) appendValue() (vt uint8, err error) {
 				d.r.UnreadByte()
 				err = d.appendNumber()
 			} else {
-				panic("Unsupported type!")
+				err = ErrInvalidChar
 			}
 		}
 
@@ -374,7 +363,9 @@ func (d *Decoder) appendNumber() (err error) {
 		}
 
 		switch b {
-		case charSpace, charNewline, charTab, charComma, charCloseCurly:
+		case charSpace, charNewline, charTab:
+			return
+		case charComma, charCloseCurly, charCloseBracket:
 			d.r.UnreadByte()
 			return
 		default:
@@ -389,7 +380,7 @@ func (d *Decoder) appendNumber() (err error) {
 
 func (d *Decoder) appendTrue() (err error) {
 	var b byte
-	for i := 0; i < 4; i++ {
+	for i := 1; i < 4; i++ {
 		if b, err = d.r.ReadByte(); err != nil {
 			return
 		} else if b != trueBytes[i] {
@@ -403,7 +394,7 @@ func (d *Decoder) appendTrue() (err error) {
 
 func (d *Decoder) appendFalse() (err error) {
 	var b byte
-	for i := 0; i < 5; i++ {
+	for i := 1; i < 5; i++ {
 		if b, err = d.r.ReadByte(); err != nil {
 			return
 		} else if b != falseBytes[i] {
@@ -413,47 +404,4 @@ func (d *Decoder) appendFalse() (err error) {
 
 	d.vb.WriteBool(false)
 	return
-}
-
-func (d *Decoder) appendObject() (err error) {
-	var (
-		b     byte
-		depth int
-	)
-
-	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
-		d.vb.WriteByte(b)
-		switch b {
-		case charCloseCurly:
-			if depth--; depth == 0 {
-				return
-			}
-
-		case charOpenCurly:
-			depth++
-		}
-	}
-
-	return ErrUnexpectedEnd
-}
-
-func (d *Decoder) appendArray() (err error) {
-	var (
-		b     byte
-		depth int
-	)
-
-	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
-		d.vb.WriteByte(b)
-		switch b {
-		case charCloseBracket:
-			if depth--; depth == 0 {
-				return
-			}
-		case charOpenBracket:
-			depth++
-		}
-	}
-
-	return ErrUnexpectedEnd
 }

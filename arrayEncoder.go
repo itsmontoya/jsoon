@@ -22,7 +22,7 @@ func (a *ArrayEncoder) Object(value Encodee) {
 	}
 
 	// Acquire buffer for this depth
-	a.e.buf = p.Acquire()
+	a.e.buf = p.acquireBuffer()
 
 	if a.e.child > 0 {
 		a.e.buf.WriteByte(',')
@@ -39,7 +39,7 @@ func (a *ArrayEncoder) Object(value Encodee) {
 	a.e.w.Write(a.e.buf.Bytes())
 
 	// Release buffer for this depth
-	p.Release(a.e.buf)
+	p.releaseBuffer(a.e.buf)
 	// Set buffer as the parent's buffer
 	a.e.buf = pb
 	// Reduce depth to the parent's level
@@ -61,7 +61,7 @@ func (a *ArrayEncoder) Array(value ArrayEncodee) {
 	}
 
 	// Acquire buffer for this depth
-	a.e.buf = p.Acquire()
+	a.e.buf = p.acquireBuffer()
 
 	if a.e.child > 0 {
 		a.e.buf.WriteByte(',')
@@ -78,7 +78,7 @@ func (a *ArrayEncoder) Array(value ArrayEncodee) {
 	a.e.w.Write(a.e.buf.Bytes())
 
 	// Release buffer for this depth
-	p.Release(a.e.buf)
+	p.releaseBuffer(a.e.buf)
 	// Set buffer as the parent's buffer
 	a.e.buf = pb
 	// Reduce depth to the parent's level
