@@ -5,19 +5,26 @@ Jsoon is a fast and simple json encoding/decoding library. Custom Marshal/Unmars
 *At the moment, only encoding is implemented*
 
 ## Benchmarks
-```
-# Go 1.7.4
+```bash
+## Go 1.7.4
+# Jsoon
 BenchmarkJsoonMarshal-4            1000000      1093 ns/op        40 B/op       2 allocs/op
 BenchmarkJsoonUnmarshal-4           300000      4095 ns/op       608 B/op      36 allocs/op
+# Standard library
 BenchmarkStdlibMarshal-4            500000      2698 ns/op         8 B/op       1 allocs/op
 BenchmarkStdlibUnmarshal-4          200000      8695 ns/op       160 B/op      11 allocs/op
+# github.com/buger/jsonparser
 BenchmarkJsonParserUnmarshal-4      300000      4596 ns/op      2368 B/op      17 allocs/op
 
-# Go 1.8 rc3
+
+## Go 1.8 rc3
+# Jsoon
 BenchmarkJsoonMarshal-4            1000000      1008 ns/op      40 B/op       2 allocs/op
 BenchmarkJsoonUnmarshal-4           500000      3729 ns/op     608 B/op      36 allocs/op
+# Standard library
 BenchmarkStdlibMarshal-4            500000      2393 ns/op       8 B/op       1 allocs/op
 BenchmarkStdlibUnmarshal-4          200000      9127 ns/op     160 B/op      11 allocs/op
+# github.com/buger/jsonparser
 BenchmarkJsonParserUnmarshal-4      300000      4451 ns/op    2368 B/op      17 allocs/op
 
 ```
