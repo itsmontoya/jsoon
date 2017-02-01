@@ -7,17 +7,19 @@ Jsoon is a fast and simple json encoding/decoding library. Custom Marshal/Unmars
 ## Benchmarks
 ```
 # Go 1.7.4
-BenchmarkJsoonMarshal-4      1000000    1090 ns/op     40 B/op     2 allocs/op
-BenchmarkJsoonUnmarshal-4     300000    4307 ns/op    608 B/op    36 allocs/op
-BenchmarkStdlibMarshal-4      500000    2633 ns/op      8 B/op     1 allocs/op
-BenchmarkStdlibUnmarshal-4    200000    8701 ns/op    160 B/op    11 allocs/op
-
+BenchmarkJsoonMarshal-4            1000000      1093 ns/op        40 B/op       2 allocs/op
+BenchmarkJsoonUnmarshal-4           300000      4095 ns/op       608 B/op      36 allocs/op
+BenchmarkStdlibMarshal-4            500000      2698 ns/op         8 B/op       1 allocs/op
+BenchmarkStdlibUnmarshal-4          200000      8695 ns/op       160 B/op      11 allocs/op
+BenchmarkJsonParserUnmarshal-4      300000      4596 ns/op      2368 B/op      17 allocs/op
 
 # Go 1.8 rc3
-BenchmarkJsoonMarshal-4      1000000    1038 ns/op     40 B/op     2 allocs/op
-BenchmarkJsoonUnmarshal-4     500000    4394 ns/op    608 B/op    36 allocs/op
-BenchmarkStdlibMarshal-4      500000    2389 ns/op      8 B/op     1 allocs/op
-BenchmarkStdlibUnmarshal-4    200000    9441 ns/op    160 B/op    11 allocs/op
+BenchmarkJsoonMarshal-4            1000000      1008 ns/op      40 B/op       2 allocs/op
+BenchmarkJsoonUnmarshal-4           500000      3729 ns/op     608 B/op      36 allocs/op
+BenchmarkStdlibMarshal-4            500000      2393 ns/op       8 B/op       1 allocs/op
+BenchmarkStdlibUnmarshal-4          200000      9127 ns/op     160 B/op      11 allocs/op
+BenchmarkJsonParserUnmarshal-4      300000      4451 ns/op    2368 B/op      17 allocs/op
+
 ```
 
 *Note: Even though the provided bench shows 1.8 as slower, on average 1.8 is faster AND more consistent*
