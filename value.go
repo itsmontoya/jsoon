@@ -75,9 +75,7 @@ func (v *Value) Number() (val float64, err error) {
 		return
 	}
 
-	return strconv.ParseFloat(string(v.d.vb.Bytes()), 64)
-	// TODO: Look into if we can leverage this for some performance gains
-	//return strconv.ParseFloat(unsafeString(v.d.vb.Bytes()), 64)
+	return strconv.ParseFloat(unsafeString(v.d.vb.Bytes()), 64)
 }
 
 // Bool will return a boolean value
