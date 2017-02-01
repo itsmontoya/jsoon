@@ -10,7 +10,8 @@ Jsoon is a fast and simple json encoding/decoding library. Custom Marshal/Unmars
 # Jsoon
 BenchmarkJsoonMarshal-4            2000000       691 ns/op        32 B/op       1 allocs/op
 BenchmarkJsoonUnmarshal-4           500000      3554 ns/op       320 B/op      15 allocs/op
-BenchmarkJsoonUnmarshalPara-4      2000000       941 ns/op       320 B/op      15 allocs/op # Concurrent bench
+# Jsoon concurrent unmarshal
+BenchmarkJsoonUnmarshalPara-4      2000000       941 ns/op       320 B/op      15 allocs/op
 # Standard library
 BenchmarkStdlibMarshal-4            500000      2637 ns/op         8 B/op       1 allocs/op
 BenchmarkStdlibUnmarshal-4          200000      8952 ns/op       160 B/op      11 allocs/op
@@ -21,7 +22,8 @@ BenchmarkJsonParserUnmarshal-4      300000      4610 ns/op      2368 B/op      1
 # Jsoon
 BenchmarkJsoonMarshal-4            2000000       703 ns/op        32 B/op       1 allocs/op
 BenchmarkJsoonUnmarshal-4           500000      3627 ns/op       320 B/op      15 allocs/op
-BenchmarkJsoonUnmarshalPara-4      2000000       870 ns/op       320 B/op      15 allocs/op # Concurrent bench
+# Jsoon concurrent unmarshal
+BenchmarkJsoonUnmarshalPara-4      2000000       870 ns/op       320 B/op      15 allocs/op
 # Standard library
 BenchmarkStdlibMarshal-4           1000000      2321 ns/op         8 B/op       1 allocs/op
 BenchmarkStdlibUnmarshal-4          200000      9361 ns/op       160 B/op      11 allocs/op
