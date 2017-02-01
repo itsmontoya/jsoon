@@ -42,11 +42,13 @@ const (
 	charZero         = '0'
 	charNine         = '9'
 	charLowerA       = 'a'
+	charLowerN       = 'n'
 	charLowerZ       = 'z'
 	charUpperA       = 'A'
 	charUpperZ       = 'Z'
 	charLowerT       = 't'
 	charLowerF       = 'f'
+	charHyphen       = '-'
 )
 
 // NewDecoder will return a new Decoder
@@ -60,6 +62,7 @@ func NewDecoder(r io.Reader) *Decoder {
 		d.r = bufio.NewReader(r)
 	}
 
+	d.v.d = &d
 	return &d
 }
 
@@ -72,6 +75,8 @@ type Decoder struct {
 	vb *buffer
 	// decode count
 	dc int
+
+	v Value
 }
 
 // Decode will decode
@@ -134,10 +139,10 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 		// State of our state machine
 		state uint8
 		// Value helper
-		val Value
+	//	val Value
 	)
 
-	val.d = d
+	//	val.d = d
 
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
 		switch state {
@@ -174,15 +179,16 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 			state = osValue
 
 		case osValue:
-			if val.vt, err = d.appendValue(b); err != nil {
+			if d.v.vt, err = d.appendValue(b); err != nil {
 				goto END
 			}
 
-			if err = dec.UnmarshalJsoon(string(d.kb.Bytes()), &val); err != nil {
+			if err = dec.UnmarshalJsoon(string(d.kb.Bytes()), &d.v); err != nil {
 				goto END
 			}
 
-			val.vt = valNil
+			//val.vt = valNil
+			d.v.vt = valNil
 			d.kb.Reset()
 			d.vb.Reset()
 			state = osPostValue
@@ -233,10 +239,10 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 		// State of our state machine
 		state uint8
 		// Value helper
-		val Value
+	//	val Value
 	)
 
-	val.d = d
+	//val.d = d
 
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
 		switch state {
@@ -245,15 +251,16 @@ func (d *Decoder) decodeArray(dec ArrayDecodee) (err error) {
 				continue
 			}
 
-			if val.vt, err = d.appendValue(b); err != nil {
+			if d.v.vt, err = d.appendValue(b); err != nil {
 				return
 			}
 
-			if err = dec.UnmarshalJsoon(&val); err != nil {
+			if err = dec.UnmarshalJsoon(&d.v); err != nil {
 				return
 			}
 
-			val.vt = valNil
+			//val.vt = valNil
+			d.v.vt = valNil
 			d.vb.Reset()
 			state = asPostValue
 
@@ -322,9 +329,14 @@ func (d *Decoder) appendValue(lead byte) (vt uint8, err error) {
 			vt = valArray
 			return
 
+		case charLowerN:
+			vt = valNil
+			err = d.readNull()
+			return
+
 		default:
 			// TODO: Figure out a cleaner way to perform this check
-			if isNumber(b) {
+			if isNumber(b) || b == charHyphen {
 				vt = valNumber
 				err = d.appendNumber(b)
 			} else {
@@ -352,8 +364,13 @@ func (d *Decoder) appendString() (err error) {
 }
 
 func (d *Decoder) appendNumber(lead byte) (err error) {
-	var b byte
+	var (
+		b   byte
+		cnt int
+	)
+
 	for b = lead; err == nil; b, err = d.r.ReadByte() {
+		cnt++
 		if isNumber(b) {
 			d.vb.WriteByte(b)
 			continue
@@ -367,6 +384,10 @@ func (d *Decoder) appendNumber(lead byte) (err error) {
 			d.r.UnreadByte()
 			return
 		default:
+			if cnt == 1 && b == charHyphen {
+				d.vb.WriteByte(b)
+				continue
+			}
 			// Invalid character found, expected a number or a number-ending character
 			return ErrInvalidChar
 		}
@@ -401,5 +422,18 @@ func (d *Decoder) appendFalse() (err error) {
 	}
 
 	d.vb.WriteBool(false)
+	return
+}
+
+func (d *Decoder) readNull() (err error) {
+	var b byte
+	for i := 1; i < 4; i++ {
+		if b, err = d.r.ReadByte(); err != nil {
+			return
+		} else if b != nullBytes[i] {
+			return ErrInvalidChar
+		}
+	}
+
 	return
 }

@@ -2,11 +2,13 @@ package jsoon
 
 import (
 	"bytes"
+	"unsafe"
 )
 
 var (
 	trueBytes  = [4]byte{'t', 'r', 'u', 'e'}
 	falseBytes = [5]byte{'f', 'a', 'l', 's', 'e'}
+	nullBytes  = [4]byte{'n', 'u', 'l', 'l'}
 )
 
 func isTrueBytes(s []byte) bool {
@@ -35,4 +37,8 @@ func isNumber(b byte) bool {
 
 func isWhitespace(b byte) bool {
 	return b == charSpace || b == charTab || b == charNewline
+}
+
+func unsafeString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
