@@ -183,7 +183,7 @@ func (d *Decoder) decodeObject(dec Decodee) (err error) {
 				goto END
 			}
 
-			if err = dec.UnmarshalJsoon(string(d.kb.Bytes()), &d.v); err != nil {
+			if err = dec.UnmarshalJsoon(unsafeString(d.kb.Bytes()), &d.v); err != nil {
 				goto END
 			}
 
