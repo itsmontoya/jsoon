@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	testStr = `{"name":"Test Name","greeting":"Hello world!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},"additionals":[{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},{"dateCreated":"2017-01-02","lastLogin":"2017-01-02"},{"dateCreated":"2017-01-03","lastLogin":"2017-01-03"}]}`
+	testStr = `{"name":"Test Name","greeting":"Hello \"world\"!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},"additionals":[{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},{"dateCreated":"2017-01-02","lastLogin":"2017-01-02"},{"dateCreated":"2017-01-03","lastLogin":"2017-01-03"}]}`
 
 	testExpanded = `
 {
 	"name" : "Test Name",
-	"greeting" : "Hello world!",
+	"greeting" : "Hello \"world\"!",
 	"age" : 32,
 	"activeUser" : true,
 	"additional" : {
@@ -233,7 +233,7 @@ func BenchmarkJsonParserUnmarshal(b *testing.B) {
 
 func newTestStruct() (ts testStruct) {
 	ts.Name = "Test Name"
-	ts.Greeting = "Hello world!"
+	ts.Greeting = `Hello "world"!`
 	ts.Age = 32
 	ts.ActiveUser = true
 	ts.Additional = &testSimpleStruct{

@@ -33,6 +33,7 @@ const (
 	charNewline      = '\n'
 	charDoubleQuote  = '"'
 	charSingleQuote  = '\''
+	charBackslash    = '\\'
 	charOpenCurly    = '{'
 	charCloseCurly   = '}'
 	charOpenBracket  = '['
@@ -351,13 +352,23 @@ func (d *Decoder) appendValue(lead byte) (vt uint8, err error) {
 }
 
 func (d *Decoder) appendString() (err error) {
-	var b byte
+	var (
+		b       byte
+		escaped bool
+	)
+
 	for b, err = d.r.ReadByte(); err == nil; b, err = d.r.ReadByte() {
-		if b == charDoubleQuote {
+		if b == charDoubleQuote && !escaped {
 			return
 		}
 
+		if !escaped && b == charBackslash {
+			escaped = true
+			continue
+		}
+
 		d.vb.WriteByte(b)
+		escaped = false
 	}
 
 	return ErrUnexpectedEnd

@@ -74,7 +74,7 @@ func (e *Encoder) Object(key string, value Encodee) {
 	e.child = 0
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteString(key)
+	e.buf.WriteEscapedString(key)
 	e.buf.WriteString(`":{`)
 	value.MarshalJsoon(e)
 	e.buf.WriteByte(charCloseCurly)
@@ -110,7 +110,7 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	e.child = 0
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteString(key)
+	e.buf.WriteEscapedString(key)
 	e.buf.WriteString(`":[`)
 	ae := p.AcquireAE(e)
 	value.MarshalJsoon(ae)
@@ -134,11 +134,11 @@ func (e *Encoder) String(key, value string) {
 	}
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteString(key)
+	e.buf.WriteEscapedString(key)
 
 	e.buf.WriteString(`":"`)
 
-	e.buf.WriteString(value)
+	e.buf.WriteEscapedString(value)
 	e.buf.WriteByte(charDoubleQuote)
 
 	e.child++
@@ -151,7 +151,7 @@ func (e *Encoder) Number(key string, value float64) {
 	}
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteString(key)
+	e.buf.WriteEscapedString(key)
 
 	e.buf.WriteString(`":`)
 	e.buf.WriteFloat64(value)
@@ -165,7 +165,7 @@ func (e *Encoder) Bool(key string, value bool) {
 	}
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteString(key)
+	e.buf.WriteEscapedString(key)
 
 	e.buf.WriteString(`":`)
 	e.buf.WriteBool(value)
