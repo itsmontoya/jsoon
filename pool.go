@@ -1,8 +1,6 @@
 package jsoon
 
-import (
-	"sync"
-)
+import "sync"
 
 func newPool() *pool {
 	var p pool
@@ -16,6 +14,8 @@ func newPool() *pool {
 
 type pool struct {
 	p sync.Pool
+	// array encoder pool
+	aep sync.Pool
 }
 
 // Acquire will acquire a buffer from the pool
