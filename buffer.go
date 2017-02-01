@@ -1,9 +1,6 @@
 package jsoon
 
-import (
-	"strconv"
-	"strings"
-)
+import "strconv"
 
 func newBuffer() *buffer {
 	return &buffer{
@@ -28,11 +25,6 @@ func (b *buffer) WriteString(v string) {
 }
 
 func (b *buffer) WriteEscapedString(v string) {
-	if strings.IndexByte(v, charDoubleQuote) == -1 {
-		b.WriteString(v)
-		return
-	}
-
 	var c byte
 	for i := 0; i < len(v); i++ {
 		c = v[i]
