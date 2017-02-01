@@ -133,6 +133,21 @@ func BenchmarkJsoonUnmarshal(b *testing.B) {
 	b.ReportAllocs()
 }
 
+func BenchmarkJsoonUnmarshalPara(b *testing.B) {
+	b.RunParallel(func(p *testing.PB) {
+		var ts testStruct
+		buf := bytes.NewReader([]byte(testStr))
+		dec := NewDecoder(buf)
+
+		for p.Next() {
+			dec.Decode(&ts)
+			buf.Seek(0, 0)
+		}
+	})
+
+	b.ReportAllocs()
+}
+
 func BenchmarkStdlibMarshal(b *testing.B) {
 	ts := newTestStruct()
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
