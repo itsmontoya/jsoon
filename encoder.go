@@ -74,7 +74,7 @@ func (e *Encoder) Object(key string, value Encodee) {
 	e.child = 0
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteEscapedString(key)
+	e.buf.WriteString(key)
 	e.buf.WriteString(`":{`)
 	value.MarshalJsoon(e)
 	e.buf.WriteByte(charCloseCurly)
@@ -110,7 +110,7 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	e.child = 0
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteEscapedString(key)
+	e.buf.WriteString(key)
 	e.buf.WriteString(`":[`)
 	ae := p.AcquireAE(e)
 	value.MarshalJsoon(ae)
@@ -127,18 +127,36 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	e.child++
 }
 
-// String will marshal a string
+// String will escape and marshal a string
 func (e *Encoder) String(key, value string) {
 	if e.child > 0 {
 		e.buf.WriteByte(charComma)
 	}
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteEscapedString(key)
+	e.buf.WriteString(key)
 
 	e.buf.WriteString(`":"`)
 
 	e.buf.WriteEscapedString(value)
+	e.buf.WriteByte(charDoubleQuote)
+
+	e.child++
+}
+
+// UnsafeString will will marshal a string without escaping
+// Note: Only use this if you are CERTAIN that your value does not contain any quotes
+func (e *Encoder) UnsafeString(key, value string) {
+	if e.child > 0 {
+		e.buf.WriteByte(charComma)
+	}
+
+	e.buf.WriteByte(charDoubleQuote)
+	e.buf.WriteString(key)
+
+	e.buf.WriteString(`":"`)
+
+	e.buf.WriteString(value)
 	e.buf.WriteByte(charDoubleQuote)
 
 	e.child++
@@ -151,7 +169,7 @@ func (e *Encoder) Number(key string, value float64) {
 	}
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteEscapedString(key)
+	e.buf.WriteString(key)
 
 	e.buf.WriteString(`":`)
 	e.buf.WriteFloat64(value)
@@ -165,7 +183,7 @@ func (e *Encoder) Bool(key string, value bool) {
 	}
 
 	e.buf.WriteByte(charDoubleQuote)
-	e.buf.WriteEscapedString(key)
+	e.buf.WriteString(key)
 
 	e.buf.WriteString(`":`)
 	e.buf.WriteBool(value)
