@@ -20,7 +20,7 @@ type Encoder struct {
 }
 
 // Encode will marshal an Encodee
-func (e *Encoder) Encode(value Encodee) {
+func (e *Encoder) Encode(value Encodee) (err error) {
 	if e.depth == 0 {
 		// Acquire buffer for this depth
 		e.buf = p.Acquire()
@@ -36,9 +36,17 @@ func (e *Encoder) Encode(value Encodee) {
 	e.child = 0
 
 	e.buf.WriteByte(charOpenCurly)
-	value.MarshalJsoon(e)
+
+	if err = value.MarshalJsoon(e); err != nil {
+		return
+	}
+
 	e.buf.WriteByte(charCloseCurly)
-	e.w.Write(e.buf.Bytes())
+
+	if _, err = e.w.Write(e.buf.Bytes()); err != nil {
+		return
+	}
+
 	e.buf.Reset()
 
 	// Set child value to parent's child value
@@ -51,10 +59,12 @@ func (e *Encoder) Encode(value Encodee) {
 		p.Release(e.buf)
 		e.buf = nil
 	}
+
+	return
 }
 
 // Object will marshal an Encodee
-func (e *Encoder) Object(key string, value Encodee) {
+func (e *Encoder) Object(key string, value Encodee) (err error) {
 	if e.depth == 0 {
 		// Acquire buffer for this depth
 		e.buf = p.Acquire()
@@ -76,9 +86,17 @@ func (e *Encoder) Object(key string, value Encodee) {
 	e.buf.WriteByte(charDoubleQuote)
 	e.buf.WriteString(key)
 	e.buf.WriteString(`":{`)
-	value.MarshalJsoon(e)
+
+	if err = value.MarshalJsoon(e); err != nil {
+		return
+	}
+
 	e.buf.WriteByte(charCloseCurly)
-	e.w.Write(e.buf.Bytes())
+
+	if _, err = e.w.Write(e.buf.Bytes()); err != nil {
+		return
+	}
+
 	e.buf.Reset()
 
 	// Reduce depth to the parent's level
@@ -87,10 +105,12 @@ func (e *Encoder) Object(key string, value Encodee) {
 	// Set child value to parent's child value
 	e.child = pc
 	e.child++
+
+	return
 }
 
 // Array will marshal an array
-func (e *Encoder) Array(key string, value ArrayEncodee) {
+func (e *Encoder) Array(key string, value ArrayEncodee) (err error) {
 	if e.depth == 0 {
 		// Acquire buffer for this depth
 		e.buf = p.Acquire()
@@ -113,10 +133,18 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	e.buf.WriteString(key)
 	e.buf.WriteString(`":[`)
 	ae := p.AcquireAE(e)
-	value.MarshalJsoon(ae)
+
+	if err = value.MarshalJsoon(ae); err != nil {
+		return
+	}
+
 	p.ReleaseAE(ae)
 	e.buf.WriteByte(charCloseBracket)
-	e.w.Write(e.buf.Bytes())
+
+	if _, err = e.w.Write(e.buf.Bytes()); err != nil {
+		return
+	}
+
 	e.buf.Reset()
 
 	// Reduce depth to the parent's level
@@ -125,6 +153,8 @@ func (e *Encoder) Array(key string, value ArrayEncodee) {
 	// Set child value to parent's child value
 	e.child = pc
 	e.child++
+
+	return
 }
 
 // String will escape and marshal a string
