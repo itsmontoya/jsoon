@@ -11,7 +11,7 @@ type ArrayEncoder struct {
 }
 
 // Object will marshal an Encodee
-func (a *ArrayEncoder) Object(value Encodee) {
+func (a *ArrayEncoder) Object(value Encodee) (err error) {
 	if a.e.depth == 0 {
 		// Acquire buffer for this depth
 		a.e.buf = p.Acquire()
@@ -31,9 +31,17 @@ func (a *ArrayEncoder) Object(value Encodee) {
 	a.e.child = 0
 
 	a.e.buf.WriteByte(charOpenCurly)
-	value.MarshalJsoon(a.e)
+
+	if err = value.MarshalJsoon(a.e); err != nil {
+		return
+	}
+
 	a.e.buf.WriteByte(charCloseCurly)
-	a.e.w.Write(a.e.buf.Bytes())
+
+	if _, err = a.e.w.Write(a.e.buf.Bytes()); err != nil {
+		return
+	}
+
 	a.e.buf.Reset()
 
 	// Set child value to parent's child value
@@ -42,10 +50,11 @@ func (a *ArrayEncoder) Object(value Encodee) {
 
 	// Reduce depth to the parent's level
 	a.e.depth--
+	return
 }
 
 // Array will marshal an array
-func (a *ArrayEncoder) Array(value ArrayEncodee) {
+func (a *ArrayEncoder) Array(value ArrayEncodee) (err error) {
 	if a.e.depth == 0 {
 		// Acquire buffer for this depth
 		a.e.buf = p.Acquire()
@@ -65,9 +74,17 @@ func (a *ArrayEncoder) Array(value ArrayEncodee) {
 	a.e.child = 0
 
 	a.e.buf.WriteByte(charOpenBracket)
-	value.MarshalJsoon(a)
+
+	if err = value.MarshalJsoon(a); err != nil {
+		return
+	}
+
 	a.e.buf.WriteByte(charCloseBracket)
-	a.e.w.Write(a.e.buf.Bytes())
+
+	if _, err = a.e.w.Write(a.e.buf.Bytes()); err != nil {
+		return
+	}
+
 	a.e.buf.Reset()
 
 	// Set child value to parent's child value
@@ -76,6 +93,7 @@ func (a *ArrayEncoder) Array(value ArrayEncodee) {
 
 	// Reduce depth to the parent's level
 	a.e.depth--
+	return
 }
 
 // String will marshal a string

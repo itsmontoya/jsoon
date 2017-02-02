@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	testStr = `{"name":"Test Name","greeting":"Hello world!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},"additionals":[{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},{"dateCreated":"2017-01-02","lastLogin":"2017-01-02"},{"dateCreated":"2017-01-03","lastLogin":"2017-01-03"}]}`
+	testStr = `{"name":"Test Name","greeting":"Hello \"world\"!","age":32,"activeUser":true,"additional":{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},"additionals":[{"dateCreated":"2017-01-01","lastLogin":"2017-01-01"},{"dateCreated":"2017-01-02","lastLogin":"2017-01-02"},{"dateCreated":"2017-01-03","lastLogin":"2017-01-03"}]}`
 
 	testExpanded = `
 {
 	"name" : "Test Name",
-	"greeting" : "Hello world!",
+	"greeting" : "Hello \"world\"!",
 	"age" : 32,
 	"activeUser" : true,
 	"additional" : {
@@ -233,7 +233,7 @@ func BenchmarkJsonParserUnmarshal(b *testing.B) {
 
 func newTestStruct() (ts testStruct) {
 	ts.Name = "Test Name"
-	ts.Greeting = "Hello world!"
+	ts.Greeting = `Hello "world"!`
 	ts.Age = 32
 	ts.ActiveUser = true
 	ts.Additional = &testSimpleStruct{
@@ -292,7 +292,9 @@ func (t *testStruct) Equals(b *testStruct) bool {
 }
 
 func (t *testStruct) MarshalJsoon(enc *Encoder) (err error) {
-	enc.String("name", t.Name)
+	// We know our name will never have quotes, so we can utilize unsafe string
+	enc.UnsafeString("name", t.Name)
+	// Our greeting might have quotes, so we will ensure it's escaped just in case
 	enc.String("greeting", t.Greeting)
 	enc.Number("age", t.Age)
 	enc.Bool("activeUser", t.ActiveUser)
@@ -357,8 +359,9 @@ func (t *testSimpleStruct) Equals(b *testSimpleStruct) bool {
 }
 
 func (t *testSimpleStruct) MarshalJsoon(enc *Encoder) (err error) {
-	enc.String("dateCreated", t.DateCreated)
-	enc.String("lastLogin", t.LastLogin)
+	// We know our dateCreated and lastLogin will never have quotes, so we can utilize unsafe string
+	enc.UnsafeString("dateCreated", t.DateCreated)
+	enc.UnsafeString("lastLogin", t.LastLogin)
 	return
 }
 

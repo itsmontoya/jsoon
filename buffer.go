@@ -1,8 +1,6 @@
 package jsoon
 
-import (
-	"strconv"
-)
+import "strconv"
 
 func newBuffer() *buffer {
 	return &buffer{
@@ -24,6 +22,18 @@ func (b *buffer) WriteByte(v byte) {
 
 func (b *buffer) WriteString(v string) {
 	b.s = append(b.s, v...)
+}
+
+func (b *buffer) WriteEscapedString(v string) {
+	var c byte
+	for i := 0; i < len(v); i++ {
+		c = v[i]
+		if c == charDoubleQuote {
+			b.s = append(b.s, charBackslash)
+		}
+
+		b.s = append(b.s, c)
+	}
 }
 
 func (b *buffer) WriteFloat64(v float64) {
