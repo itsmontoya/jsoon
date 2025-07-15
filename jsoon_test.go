@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/buger/jsonparser"
@@ -40,6 +41,10 @@ const (
 }
 `
 )
+
+func init() {
+	runtime.MemProfileRate = 1 // Capture every allocation for detailed profiling
+}
 
 func TestMarshal(t *testing.T) {
 	ts := newTestStruct()
@@ -326,13 +331,25 @@ func (t *testStruct) UnmarshalJsoon(key string, val *Value) (err error) {
 		}
 
 	case "additional":
-		t.Additional = &testSimpleStruct{}
+		if t.Additional == nil {
+			t.Additional = &testSimpleStruct{}
+		}
+
 		if err = val.Object(t.Additional); err != nil {
 			return
 		}
 
 	case "additionals":
-		t.Additionals = make(testSimpleStructSlice, 0, 3)
+		if t.Additionals == nil {
+
+		}
+
+		if t.Additionals == nil {
+			t.Additionals = make(testSimpleStructSlice, 0, 3)
+		} else {
+			t.Additionals = t.Additionals[:0]
+		}
+
 		if err = val.Array(&t.Additionals); err != nil {
 			return
 		}
