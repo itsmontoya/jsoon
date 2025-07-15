@@ -231,63 +231,6 @@ func BenchmarkJsonParserUnmarshal(b *testing.B) {
 
 }
 
-func BenchmarkEasyJSONUnmarshal(b *testing.B) {
-	var ts testStruct
-	buf := bytes.NewReader([]byte(testStr))
-
-	for i := 0; i < b.N; i++ {
-		// Need to read all to byteslice to simulate receiving a reader and needing to read all bytes before parsing
-		data, err := io.ReadAll(buf)
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		if ts.Name, err = jsonparser.GetString(data, "name"); err != nil {
-			b.Fatal(err)
-		}
-
-		if ts.Greeting, err = jsonparser.GetString(data, "greeting"); err != nil {
-			b.Fatal(err)
-		}
-
-		if ts.Age, err = jsonparser.GetFloat(data, "age"); err != nil {
-			b.Fatal(err)
-		}
-
-		if ts.ActiveUser, err = jsonparser.GetBoolean(data, "activeUser"); err != nil {
-			b.Fatal(err)
-		}
-
-		ts.Additional = &testSimpleStruct{}
-		if ts.Additional.DateCreated, err = jsonparser.GetString(data, "additional", "dateCreated"); err != nil {
-			b.Fatal(err)
-		}
-
-		if ts.Additional.LastLogin, err = jsonparser.GetString(data, "additional", "lastLogin"); err != nil {
-			b.Fatal(err)
-		}
-
-		ts.Additionals = make(testSimpleStructSlice, 0, 3)
-		jsonparser.ArrayEach(data, func(bs []byte, vt jsonparser.ValueType, offset int, err error) {
-			tss := &testSimpleStruct{}
-			if tss.DateCreated, err = jsonparser.GetString(bs, "dateCreated"); err != nil {
-				b.Fatal(err)
-			}
-
-			if tss.LastLogin, err = jsonparser.GetString(bs, "lastLogin"); err != nil {
-				b.Fatal(err)
-			}
-
-			ts.Additionals = append(ts.Additionals, tss)
-		}, "additionals")
-
-		buf.Seek(0, 0)
-	}
-
-	b.ReportAllocs()
-
-}
-
 func newTestStruct() (ts testStruct) {
 	ts.Name = "Test Name"
 	ts.Greeting = `Hello "world"!`
