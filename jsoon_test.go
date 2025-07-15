@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/buger/jsonparser"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/buger/jsonparser"
 )
 
 const (
@@ -621,7 +622,7 @@ func (s *StripeSource) UnmarshalJsoon(key string, val *Value) (err error) {
 
 func (s *StripeSource) Equals(os *StripeSource) (err error) {
 	if s.ID != os.ID {
-		return fmt.Errorf("id's don't match: %s | %s")
+		return fmt.Errorf("id's don't match: %s | %s", s.ID, os.ID)
 	}
 
 	if s.Object != os.Object {
